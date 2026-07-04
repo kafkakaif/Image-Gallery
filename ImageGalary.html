@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Immerse | Premium Responsive Image Gallery</title>
+    <style>
+        /* --- Core Variables & Design Tokens --- */
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --accent-color: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --card-radius: 12px;
+            --transition-smooth: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* --- Global Reset & Architecture --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Responsive Navigation Bar --- */
+        header {
+            background-color: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .navbar {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        .nav-logo span {
+            color: var(--accent-color);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            transition: var(--transition-smooth);
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-color);
+        }
+
+        /* Mobile Hamburger Menu icon triggers */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .menu-toggle span {
+            width: 26px;
+            height: 3px;
+            background-color: var(--text-main);
+            border-radius: 2px;
+            transition: var(--transition-smooth);
+        }
+
+        /* --- Category Filter System --- */
+        .filter-container {
+            max-width: 1400px;
+            margin: 40px auto 20px;
+            padding: 0 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background-color: var(--bg-secondary);
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .filter-btn:hover {
+            background-color: rgba(56, 189, 248, 0.1);
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .filter-btn.active-filter {
+            background-color: var(--accent-color);
+            color: var(--bg-primary);
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3);
+        }
+
+        /* --- Responsive Gallery Grid --- */
+        .gallery-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+            flex-grow: 1;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .gallery-item {
+            position: relative;
+            background-color: var(--bg-secondary);
+            border-radius: var(--card-radius);
+            overflow: hidden;
+            aspect-ratio: 4 / 3;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: var(--transition-smooth);
+            animation: scaleUp 0.4s ease forwards;
+        }
+
+        @keyframes scaleUp {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Smooth Hover Effects */
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition-smooth);
+            display: block;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.1) rotate(1deg);
+        }
+
+        .gallery-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.2) 60%, rgba(15, 23, 42, 0) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 24px;
+            opacity: 0;
+            transition: var(--transition-smooth);
+        }
+
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1;
+        }
+
+        .image-title {
+            font-size: 18px;
+            font-weight: 700;
+            transform: translateY(10px);
+            transition: var(--transition-smooth);
+        }
+
+        .image-category {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--accent-color);
+            margin-bottom: 4px;
+            transform: translateY(10px);
+            transition: var(--transition-smooth);
+            transition-delay: 0.05s;
+        }
+
+        .gallery-item:hover .image-title,
+        .gallery-item:hover .image-category {
+            transform: translateY(0);
+        }
+
+        /* Handling Item Visibility States during Filter */
+        .gallery-item.hidden-item {
+            display: none;
+        }
+
+        /* --- Lightbox / Modal Module --- */
+        .lightbox-modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(9, 15, 28, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .lightbox-modal.active-modal {
+            display: flex;
+            opacity: 1;
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 85vw;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .lightbox-img {
+            max-width: 100%;
+            max-height: 75vh;
+            object-fit: contain;
+            border-radius: 6px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: scale(0.95);
+            transition: var(--transition-smooth);
+        }
+
+        .lightbox-modal.active-modal .lightbox-img {
+            transform: scale(1);
+        }
+
+        .lightbox-caption {
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .lightbox-caption h4 {
+            font-size: 18px;
+            color: var(--text-main);
+        }
+
+        .lightbox-caption p {
+            font-size: 13px;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
+
+        /* Control Buttons */
+        .lightbox-btn {
+            position: absolute;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition-smooth);
+            user-select: none;
+            z-index: 1010;
+        }
+
+        .lightbox-btn:hover {
+            background: var(--accent-color);
+            color: var(--bg-primary);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+
+        .close-btn { top: -60px; right: 0; }
+        .prev-btn { left: -80px; top: 50%; transform: translateY(-50%); }
+        .next-btn { right: -80px; top: 50%; transform: translateY(-50%); }
+
+        /* --- Footer --- */
+        footer {
+            text-align: center;
+            padding: 30px;
+            background-color: var(--bg-secondary);
+            color: var(--text-muted);
+            font-size: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: auto;
+        }
+
+        /* --- Responsive Design Breakpoints --- */
+        @media (max-width: 1024px) {
+            .prev-btn { left: 16px; top: auto; bottom: -70px; transform: none; }
+            .next-btn { right: 16px; top: auto; bottom: -70px; transform: none; }
+            .close-btn { top: -60px; right: 16px; }
+            .lightbox-content { max-width: 95vw; }
+        }
+
+        @media (max-width: 768px) {
+            .menu-toggle { display: flex; }
+            
+            .nav-links {
+                position: fixed;
+                top: 77px;
+                left: -100%;
+                width: 100%;
+                height: calc(100vh - 77px);
+                background-color: var(--bg-primary);
+                flex-direction: column;
+                align-items: center;
+                padding-top: 60px;
+                gap: 40px;
+                transition: var(--transition-smooth);
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .nav-links.mobile-active {
+                left: 0;
+            }
+
+            .navbar.active-nav .menu-toggle span:nth-child(1) {
+                transform: translateY(9px) rotate(45deg);
+            }
+            .navbar.active-nav .menu-toggle span:nth-child(2) {
+                opacity: 0;
+            }
+            .navbar.active-nav .menu-toggle span:nth-child(3) {
+                transform: translateY(-9px) rotate(-45deg);
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Responsive Navigation Bar -->
+    <header>
+        <nav class="navbar" id="navbar">
+            <a href="#" class="nav-logo">IMMERSE<span>.</span></a>
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle Navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#" class="active">Home</a></li>
+                <li><a href="#">Explore</a></li>
+                <li><a href="#">Exhibitions</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Category Filter System -->
+    <div class="filter-container">
+        <button class="filter-btn active-filter" data-category="all">All Architecture</button>
+        <button class="filter-btn" data-category="nature">Nature</button>
+        <button class="filter-btn" data-category="cars">Cars</button>
+        <button class="filter-btn" data-category="animals">Animals</button>
+        <button class="filter-btn" data-category="food">Food</button>
+    </div>
+
+    <!-- Responsive Gallery Grid (20 Unsplash Images) -->
+    <main class="gallery-wrapper">
+        <div class="gallery-grid" id="galleryGrid">
+            
+            <!-- Nature Category (5 Images) -->
+            <div class="gallery-item" data-category="nature">
+                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80" alt="Yosemite Valley Lake">
+                <div class="gallery-overlay">
+                    <span class="image-category">Nature</span>
+                    <h3 class="image-title">Yosemite Valley</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="nature">
+                <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=600&q=80" alt="Foggy Mountains Mornings">
+                <div class="gallery-overlay">
+                    <span class="image-category">Nature</span>
+                    <h3 class="image-title">Alpine Fog</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="nature">
+                <img src="https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=600&q=80" alt="Forest Sun Rays">
+                <div class="gallery-overlay">
+                    <span class="image-category">Nature</span>
+                    <h3 class="image-title">Misty Woods</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="nature">
+                <img src="https://images.unsplash.com/photo-1472214222541-d510753a8707?auto=format&fit=crop&w=600&q=80" alt="Green Open Valley">
+                <div class="gallery-overlay">
+                    <span class="image-category">Nature</span>
+                    <h3 class="image-title">Emerald Hills</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="nature">
+                <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80" alt="Sun Piercing Canopy">
+                <div class="gallery-overlay">
+                    <span class="image-category">Nature</span>
+                    <h3 class="image-title">Sylvan Light</h3>
+                </div>
+            </div>
+
+            <!-- Cars Category (5 Images) -->
+            <div class="gallery-item" data-category="cars">
+                <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=600&q=80" alt="Porsche 911 on highway">
+                <div class="gallery-overlay">
+                    <span class="image-category">Cars</span>
+                    <h3 class="image-title">Porsche 911 Carrera</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="cars">
+                <img src="https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80" alt="Chevrolet Corvette Side Profile">
+                <div class="gallery-overlay">
+                    <span class="image-category">Cars</span>
+                    <h3 class="image-title">Corvette Stingray</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="cars">
+                <img src="https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=600&q=80" alt="Modern BMW Headlight">
+                <div class="gallery-overlay">
+                    <span class="image-category">Cars</span>
+                    <h3 class="image-title">BMW M Performance</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="cars">
+                <img src="https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=600&q=80" alt="Audi e-tron Minimalist">
+                <div class="gallery-overlay">
+                    <span class="image-category">Cars</span>
+                    <h3 class="image-title">Audi e-tron GT</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="cars">
+                <img src="https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=600&q=80" alt="Mercedes AMG Stealth Rear">
+                <div class="gallery-overlay">
+                    <span class="image-category">Cars</span>
+                    <h3 class="image-title">Mercedes AMG Black</h3>
+                </div>
+            </div>
+
+            <!-- Animals Category (5 Images) -->
+            <div class="gallery-item" data-category="animals">
+                <img src="https://images.unsplash.com/photo-1474511320723-9a56873867b5?auto=format&fit=crop&w=600&q=80" alt="Red Fox Close-up">
+                <div class="gallery-overlay">
+                    <span class="image-category">Animals</span>
+                    <h3 class="image-title">Wild Red Fox</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="animals">
+                <img src="https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=600&q=80" alt="Lion Portrait Pride">
+                <div class="gallery-overlay">
+                    <span class="image-category">Animals</span>
+                    <h3 class="image-title">African Lion King</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="animals">
+                <img src="https://images.unsplash.com/photo-1534567153574-2b12153a87f0?auto=format&fit=crop&w=600&q=80" alt="Leopard Resting On Tree">
+                <div class="gallery-overlay">
+                    <span class="image-category">Animals</span>
+                    <h3 class="image-title">Amur Leopard</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="animals">
+                <img src="https://images.unsplash.com/photo-1575550959106-5a7defe28b56?auto=format&fit=crop&w=600&q=80" alt="Stag Deer In Foggy Meadow">
+                <div class="gallery-overlay">
+                    <span class="image-category">Animals</span>
+                    <h3 class="image-title">Imperial Stag</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="animals">
+                <img src="https://images.unsplash.com/photo-1484406566174-9da000fda645?auto=format&fit=crop&w=600&q=80" alt="White Tailed Deer">
+                <div class="gallery-overlay">
+                    <span class="image-category">Animals</span>
+                    <h3 class="image-title">Forest Fawn</h3>
+                </div>
+            </div>
+
+            <!-- Food Category (5 Images) -->
+            <div class="gallery-item" data-category="food">
+                <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80" alt="Wood-fired Pepperoni Pizza">
+                <div class="gallery-overlay">
+                    <span class="image-category">Food</span>
+                    <h3 class="image-title">Neapolitan Pizza</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="food">
+                <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80" alt="Healthy Salmon Salad Bowl">
+                <div class="gallery-overlay">
+                    <span class="image-category">Food</span>
+                    <h3 class="image-title">Gourmet Salad Bowl</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="food">
+                <img src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=600&q=80" alt="Stack of pancakes syrup">
+                <div class="gallery-overlay">
+                    <span class="image-category">Food</span>
+                    <h3 class="image-title">Buttermilk Pancakes</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="food">
+                <img src="https://images.unsplash.com/photo-1484723091739-30a097e8f929?auto=format&fit=crop&w=600&q=80" alt="French Toast Berry Dressing">
+                <div class="gallery-overlay">
+                    <span class="image-category">Food</span>
+                    <h3 class="image-title">Artisan French Toast</h3>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="food">
+                <img src="https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=600&q=80" alt="Gourmet Egg Avocado Toast">
+                <div class="gallery-overlay">
+                    <span class="image-category">Food</span>
+                    <h3 class="image-title">Avocado Poached Egg</h3>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Lightbox / Modal Integration Component -->
+    <div class="lightbox-modal" id="lightboxModal">
+        <div class="lightbox-content">
+            <button class="lightbox-btn close-btn" id="closeBtn" aria-label="Close Lightbox">&times;</button>
+            <button class="lightbox-btn prev-btn" id="prevBtn" aria-label="Previous Image">&#10094;</button>
+            <button class="lightbox-btn next-btn" id="nextBtn" aria-label="Next Image">&#10095;</button>
+            <img src="" alt="" class="lightbox-img" id="lightboxImg">
+            <div class="lightbox-caption" id="lightboxCaption">
+                <h4></h4>
+                <p></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Corporate Footer -->
+    <footer>
+        <p>&copy; 2026 Immerse Gallery Systems. Designed using CSS Grid, Flexbox, and Vanilla ES6 script.</p>
+    </footer>
+
+    <!-- Core App Logic Engine -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Node Selectors ---
+            const menuToggle = document.getElementById('menuToggle');
+            const navLinks = document.getElementById('navLinks');
+            const navbar = document.getElementById('navbar');
+            
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const galleryItems = Array.from(document.querySelectorAll('.gallery-item'));
+            
+            const lightboxModal = document.getElementById('lightboxModal');
+            const lightboxImg = document.getElementById('lightboxImg');
+            const lightboxTitle = lightboxModal.querySelector('.lightbox-caption h4');
+            const lightboxCat = lightboxModal.querySelector('.lightbox-caption p');
+            const closeBtn = document.getElementById('closeBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            let currentlyActiveArray = [...galleryItems]; // Tracks visible elements based on active filters
+            let globalIndex = 0; // Pointer index for active array navigation
+
+            // --- 1. Responsive Navigation System ---
+            menuToggle.addEventListener('click', () => {
+                navLinks.classList.toggle('mobile-active');
+                navbar.classList.toggle('active-nav');
+            });
+
+            // Close mobile menu when a navigation item is selected
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.addEventListener('click', () => {
+                    navLinks.classList.remove('mobile-active');
+                    navbar.classList.remove('active-nav');
+                });
+            });
+
+            // --- 2. Category Filter Business Logic ---
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Update Active Button State
+                    document.querySelector('.active-filter').classList.remove('active-filter');
+                    button.classList.add('active-filter');
+
+                    const selectedCategory = button.getAttribute('data-category');
+
+                    // Reset Visibility States via Utility Array Manipulation
+                    currentlyActiveArray = galleryItems.filter(item => {
+                        const targetCat = item.getAttribute('data-category');
+                        if (selectedCategory === 'all' || targetCat === selectedCategory) {
+                            item.classList.remove('hidden-item');
+                            return true;
+                        } else {
+                            item.classList.add('hidden-item');
+                            return false;
+                        }
+                    });
+                });
+            });
+
+            // --- 3. Lightbox Engine ---
+            const syncLightboxData = (index) => {
+                const activeItem = currentlyActiveArray[index];
+                const activeImg = activeItem.querySelector('img');
+                const activeTitle = activeItem.querySelector('.image-title').textContent;
+                const activeCategory = activeItem.querySelector('.image-category').textContent;
+
+                // Sync image data using original high-res URL configuration fallback
+                lightboxImg.src = activeImg.src.replace('&w=600', '&w=1200'); // Dynamically swap for premium resolution
+                lightboxImg.alt = activeImg.alt;
+                lightboxTitle.textContent = activeTitle;
+                lightboxCat.textContent = activeCategory;
+            };
+
+            const openLightbox = (index) => {
+                globalIndex = index;
+                syncLightboxData(globalIndex);
+                lightboxModal.classList.add('active-modal');
+                document.body.style.overflow = 'hidden'; // Freeze viewport background scroll
+            };
+
+            const closeLightbox = () => {
+                lightboxModal.classList.remove('active-modal');
+                document.body.style.overflow = ''; // Release viewport scrolling
+            };
+
+            const navigateNext = () => {
+                globalIndex = (globalIndex + 1) % currentlyActiveArray.length;
+                syncLightboxData(globalIndex);
+            };
+
+            const navigatePrev = () => {
+                globalIndex = (globalIndex - 1 + currentlyActiveArray.length) % currentlyActiveArray.length;
+                syncLightboxData(globalIndex);
+            };
+
+            // Attach dynamic item hooks for click handlers
+            galleryItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    // Identify internal lookup index against currently active runtime filters
+                    const localIndex = currentlyActiveArray.indexOf(item);
+                    if (localIndex !== -1) openLightbox(localIndex);
+                });
+            });
+
+            // Interactive Event Subscriptions
+            closeBtn.addEventListener('click', closeLightbox);
+            nextBtn.addEventListener('click', navigateNext);
+            prevBtn.addEventListener('click', navigatePrev);
+
+            // Lightbox dismiss on backdrop interaction click setup
+            lightboxModal.addEventListener('click', (e) => {
+                if (e.target === lightboxModal) closeLightbox();
+            });
+
+            // Keyboard Accessibility Hook
+            document.addEventListener('keydown', (e) => {
+                if (!lightboxModal.classList.contains('active-modal')) return;
+                if (e.key === 'Escape') closeLightbox();
+                if (e.key === 'ArrowRight') navigateNext();
+                if (e.key === 'ArrowLeft') navigatePrev();
+            });
+        });
+    </script>
+</body>
+</html>
